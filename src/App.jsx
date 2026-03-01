@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, createContext, useContext } from "react";
 
 import { db, auth, appId } from "./firebase";
@@ -321,6 +322,7 @@ const TestEngineView = ({ params }) => {
   const [timeLeft, setTimeLeft] = useState(test?.duration || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitModal, setShowSubmitModal] = useState(false);
+  const [showMobilePalette, setShowMobilePalette] = useState(false);
 
   useEffect(() => {
     if (!test) return;
@@ -464,20 +466,84 @@ const TestEngineView = ({ params }) => {
       />
 
       {/* Top Bar */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-10">
+      <header className="bg-white border-b border-slate-200 px-4 md:px-6 py-3 flex items-center justify-between shrink-0 shadow-sm z-10">
         <div>
-          <h2 className="font-bold text-slate-800 text-lg leading-none">{test.title}</h2>
-          <p className="text-slate-500 text-sm mt-1">{test.questions.length} Questions | {test.totalMarks} Marks</p>
+          <h2 className="font-bold text-slate-800 text-base md:text-lg leading-none">{test.title}</h2>
+          <p className="text-slate-500 text-xs md:text-sm mt-1">{test.questions.length} Questions | {test.totalMarks} Marks</p>
         </div>
-        <div className="flex items-center gap-6">
-          <div className={`flex items-center gap-2 font-mono text-xl font-bold px-4 py-1.5 rounded-lg ${timeLeft < 60 ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-slate-100 text-slate-800'}`}>
-            <Clock size={20} /> {formatTimer(timeLeft)}
+        <div className="flex items-center gap-2 md:gap-6">
+          <div className={`flex items-center gap-2 font-mono text-lg md:text-xl font-bold px-3 md:px-4 py-1.5 rounded-lg ${timeLeft < 60 ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-slate-100 text-slate-800'}`}>
+            <Clock size={18} /> {formatTimer(timeLeft)}
           </div>
-          <Button variant="success" onClick={onAttemptSubmitClick} disabled={isSubmitting}>
+          <Button variant="success" onClick={onAttemptSubmitClick} disabled={isSubmitting} className="hidden md:inline-flex">
             Submit Test
           </Button>
+          {/* Mobile Hamburger */}
+          <button
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+            onClick={() => setShowMobilePalette(true)}
+          >
+            <Menu size={22} />
+          </button>
         </div>
       </header>
+
+      {/* Mobile Palette Drawer */}
+      {showMobilePalette && (
+        <div className="fixed inset-0 z-[60] flex md:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowMobilePalette(false)} />
+          {/* Drawer Panel */}
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[90vw] bg-white flex flex-col shadow-2xl">
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0">
+              <span className="font-bold text-slate-800">Question Palette</span>
+              <button onClick={() => setShowMobilePalette(false)} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            {/* Legend */}
+            <div className="p-3 grid grid-cols-2 gap-2 text-xs font-medium border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-500 flex items-center justify-center text-[10px] text-white">{counts.answered}</div> Answered</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-red-500 flex items-center justify-center text-[10px] text-white">{counts.not_answered}</div> Not Ans</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-white border border-slate-300 flex items-center justify-center text-[10px] text-slate-600">{counts.not_visited}</div> Not Visited</div>
+              <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-purple-500 flex items-center justify-center text-[10px] text-white">{counts.marked}</div> Marked</div>
+            </div>
+            {/* Question Numbers */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="grid grid-cols-5 gap-2">
+                {test.questions.map((q, idx) => {
+                  const qStatus = status[q.id] || 'not_visited';
+                  const isActive = currentQIndex === idx;
+                  return (
+                    <button
+                      key={q.id}
+                      onClick={() => {
+                        if (!status[currentQ.id]) updateStatus(currentQ.id, 'not_answered');
+                        setCurrentQIndex(idx);
+                        if (!status[q.id]) updateStatus(q.id, 'not_answered');
+                        setShowMobilePalette(false);
+                      }}
+                      className={`h-10 w-full rounded-md font-bold text-sm border flex items-center justify-center transition-all
+                        ${getStatusColor(qStatus)}
+                        ${isActive ? 'ring-2 ring-blue-600 ring-offset-2 scale-110 z-10' : 'hover:opacity-80'}
+                      `}
+                    >
+                      {idx + 1}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            {/* Submit Button in Drawer */}
+            <div className="p-4 border-t border-slate-200 shrink-0">
+              <Button variant="success" className="w-full" size="lg" onClick={() => { setShowMobilePalette(false); onAttemptSubmitClick(); }} disabled={isSubmitting}>
+                Submit Test
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Engine Area */}
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
@@ -552,8 +618,8 @@ const TestEngineView = ({ params }) => {
           </div>
         </div>
 
-        {/* Right Side: Palette */}
-        <div className="w-full md:w-80 bg-slate-50 border-t md:border-l md:border-t-0 border-slate-200 flex flex-col shrink-0 h-48 md:h-full">
+        {/* Right Side: Palette (Desktop only) */}
+        <div className="hidden md:flex w-full md:w-80 bg-slate-50 border-t md:border-l md:border-t-0 border-slate-200 flex-col shrink-0 md:h-full">
           <div className="p-3 grid grid-cols-2 gap-2 text-xs font-medium border-b border-slate-200 bg-white">
             <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-emerald-500 flex items-center justify-center text-[10px] text-white">{counts.answered}</div> Answered</div>
             <div className="flex items-center gap-2"><div className="w-4 h-4 rounded-md bg-red-500 flex items-center justify-center text-[10px] text-white">{counts.not_answered}</div> Not Ans</div>
