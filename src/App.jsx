@@ -70,7 +70,10 @@ const SUBJECTS_LIST = [
   { id: 'mathematics', name: 'Mathematics' },
   { id: 'reasoning', name: 'Reasoning' },
   { id: 'general-awareness', name: 'General Awareness' },
-  { id: 'english', name: 'English' }
+  { id: 'english', name: 'English' },
+  { id: 'physics', name: 'Physics' },
+  { id: 'chemistry', name: 'Chemistry' },
+  { id: 'biology', name: 'Biology' },
 ];
 
 const INITIAL_TESTS = [
